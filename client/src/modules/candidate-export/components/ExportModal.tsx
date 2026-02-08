@@ -33,7 +33,7 @@ export function ExportModal({ job, onClose, onCancel }: ExportModalProps) {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.15 }}
-        className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full"
+        className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button — only when not actively processing */}
@@ -136,7 +136,7 @@ export function ExportModal({ job, onClose, onCancel }: ExportModalProps) {
                 onClick={onClose}
                 className="mt-6 px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
               >
-                Try Again
+                Close
               </button>
             </motion.div>
           )}

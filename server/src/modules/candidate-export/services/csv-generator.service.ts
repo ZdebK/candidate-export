@@ -29,11 +29,7 @@ export function buildFileName(): string {
   return `candidates_${timestamp}.csv`;
 }
 
-export function generateCsv(
-  rows: CandidateRow[],
-  fileName: string,
-  onProgress?: (percentage: number) => void,
-): Promise<string> {
+export function generateCsv(rows: CandidateRow[], fileName: string): Promise<string> {
   ensureExportsDir();
 
   const filePath = path.join(EXPORTS_DIR, fileName);
@@ -51,7 +47,6 @@ export function generateCsv(
   );
 
   fs.writeFileSync(filePath, output, 'utf-8');
-  onProgress?.(100);
 
   return Promise.resolve(filePath);
 }

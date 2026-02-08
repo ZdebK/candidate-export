@@ -22,23 +22,9 @@ export class ProgressTracker {
       stage: 'Fetching candidates',
       candidatesProcessed: processed,
       totalCandidates: total,
-      percentage: total > 0 ? Math.round((processed / total) * 40) : 0,
+      percentage: total > 0 ? Math.round((processed / total) * 90) : 0,
     });
   }
 
-  applicationsPhase(processed: number, total: number): void {
-    this.update({
-      stage: 'Fetching applications',
-      applicationsProcessed: processed,
-      totalApplications: total,
-      percentage: 40 + (total > 0 ? Math.round((processed / total) * 40) : 0),
-    });
-  }
 
-  csvPhase(percentage: number): void {
-    this.update({
-      stage: 'Generating CSV',
-      percentage: 80 + Math.round(percentage * 0.2),
-    });
-  }
 }

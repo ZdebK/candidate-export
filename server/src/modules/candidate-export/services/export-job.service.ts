@@ -33,21 +33,17 @@ async function runExportJob(jobId: string): Promise<void> {
   const tracker = new ProgressTracker(jobId);
 
   try {
-    // Phase 1: Fetch candidates with included job-applications (0–80%)
     tracker.update({ stage: 'Fetching candidates...', percentage: 5 });
     const { candidates, applicationsByCandidateId, totalApplications } =
       await fetchAllCandidatesWithApplications((processed, total) => {
         tracker.candidatesPhase(processed, total);
       });
 
-    // Phase 2: Build rows + generate CSV (80–100%)
-    tracker.update({ stage: 'Generating CSV...', percentage: 80 });
+    tracker.update({ stage: 'Generating CSV...', percentage: 95 });
     const rows = buildCandidateRows(candidates, applicationsByCandidateId);
 
     const fileName = buildFileName();
-    const filePath = await generateCsv(rows, fileName, (pct) => {
-      tracker.csvPhase(pct);
-    });
+    const filePath = await generateCsv(rows, fileName);
 
     exportJobStore.update(jobId, {
       status: 'completed',

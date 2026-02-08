@@ -5,8 +5,6 @@ export interface ExportProgress {
   stage: string;
   candidatesProcessed: number;
   totalCandidates: number;
-  applicationsProcessed: number;
-  totalApplications: number;
 }
 
 export interface ExportResult {

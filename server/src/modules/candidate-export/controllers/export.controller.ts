@@ -1,8 +1,19 @@
 import { Router } from 'express';
 import * as fs from 'fs';
 import { createExportJob, getExportJob } from '../services/export-job.service';
+import { fetchCandidateCount } from '../services/teamtailor.service';
 
 export const exportRouter = Router();
+
+// GET /api/candidate-export/count
+exportRouter.get('/count', async (_req, res, next) => {
+  try {
+    const counts = await fetchCandidateCount();
+    res.json(counts);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // POST /api/candidate-export/start
 exportRouter.post('/start', (_req, res) => {
