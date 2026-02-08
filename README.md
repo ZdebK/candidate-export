@@ -8,6 +8,7 @@ Full-stack application that connects to the [Teamtailor API](https://docs.teamta
 - Background job with real-time progress tracking
 - Animated modal UI (progress bar, success/error states)
 - Rate limiting and retry with exponential backoff
+- Pararell page fatches with p-limit
 - Streaming CSV generation (memory-efficient for large datasets)
 
 ## Tech Stack
@@ -15,7 +16,7 @@ Full-stack application that connects to the [Teamtailor API](https://docs.teamta
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS v4 |
-| Backend | Node.js, Express 5, TypeScript, ts-node |
+| Backend | Node.js, Express 5, TypeScript, ts-node, p-limit |
 | Animation | motion/react |
 | CSV | csv-stringify |
 
