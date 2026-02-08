@@ -1,4 +1,4 @@
-import { stringify } from 'csv-stringify';
+import { stringify } from 'csv-stringify/sync';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { CandidateRow } from '../types/teamtailor.types';
@@ -29,7 +29,7 @@ export function buildFileName(): string {
   return `candidates_${timestamp}.csv`;
 }
 
-export async function generateCsv(
+export function generateCsv(
   rows: CandidateRow[],
   fileName: string,
   onProgress?: (percentage: number) => void,
@@ -37,46 +37,23 @@ export async function generateCsv(
   ensureExportsDir();
 
   const filePath = path.join(EXPORTS_DIR, fileName);
-  const writeStream = fs.createWriteStream(filePath, { encoding: 'utf-8' });
-  const batchSize = 100;
-  let processed = 0;
 
-  return new Promise((resolve, reject) => {
-    const stringifier = stringify({ header: true, columns: CSV_HEADERS as unknown as string[] });
+  const output = stringify(
+    rows.map((row) => [
+      row.candidate_id,
+      row.first_name,
+      row.last_name,
+      row.email,
+      row.job_application_id,
+      row.job_application_created_at,
+    ]),
+    { header: true, columns: CSV_HEADERS as unknown as string[] },
+  );
 
-    writeStream.on('error', reject);
-    stringifier.on('error', reject);
-    stringifier.on('finish', () => resolve(filePath));
+  fs.writeFileSync(filePath, output, 'utf-8');
+  onProgress?.(100);
 
-    stringifier.pipe(writeStream);
-
-    // Write rows in batches to avoid blocking the event loop
-    const writeBatch = () => {
-      const batch = rows.slice(processed, processed + batchSize);
-
-      for (const row of batch) {
-        stringifier.write([
-          row.candidate_id,
-          row.first_name,
-          row.last_name,
-          row.email,
-          row.job_application_id,
-          row.job_application_created_at,
-        ]);
-      }
-
-      processed += batch.length;
-      onProgress?.(Math.round((processed / rows.length) * 100));
-
-      if (processed < rows.length) {
-        setImmediate(writeBatch);
-      } else {
-        stringifier.end();
-      }
-    };
-
-    writeBatch();
-  });
+  return Promise.resolve(filePath);
 }
 
 export function deleteFile(filePath: string): void {
