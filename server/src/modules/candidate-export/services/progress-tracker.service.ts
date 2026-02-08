@@ -1,0 +1,44 @@
+import { exportJobStore } from '../models/export-job.model';
+import type { ExportProgress } from '../models/export-job.model';
+
+export class ProgressTracker {
+  constructor(private readonly jobId: string) {}
+
+  update(patch: Partial<ExportProgress>): void {
+    const job = exportJobStore.get(this.jobId);
+    if (!job) return;
+
+    exportJobStore.update(this.jobId, {
+      status: 'processing',
+      progress: { ...job.progress, ...patch },
+    });
+
+    const { stage, percentage } = { ...job.progress, ...patch };
+    console.log(`[Job ${this.jobId}] ${stage} — ${percentage}%`);
+  }
+
+  candidatesPhase(processed: number, total: number): void {
+    this.update({
+      stage: 'Fetching candidates',
+      candidatesProcessed: processed,
+      totalCandidates: total,
+      percentage: total > 0 ? Math.round((processed / total) * 40) : 0,
+    });
+  }
+
+  applicationsPhase(processed: number, total: number): void {
+    this.update({
+      stage: 'Fetching applications',
+      applicationsProcessed: processed,
+      totalApplications: total,
+      percentage: 40 + (total > 0 ? Math.round((processed / total) * 40) : 0),
+    });
+  }
+
+  csvPhase(percentage: number): void {
+    this.update({
+      stage: 'Generating CSV',
+      percentage: 80 + Math.round(percentage * 0.2),
+    });
+  }
+}
