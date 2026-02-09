@@ -1,5 +1,6 @@
 import { config } from '../../../shared/config/env.config';
 import { fetchPage } from '../utils/api-client.util';
+import { logger } from '../../../shared/utils/logger.util';
 import pLimit from 'p-limit';
 import type {
   CandidateAttributes,
@@ -42,7 +43,7 @@ export async function fetchAllCandidatesWithApplications(
   const totalPages = firstPage.meta['page-count'];
   const totalCandidates = firstPage.meta['record-count'];
 
-  console.log(`[Teamtailor] Starting parallel fetch: ${totalCandidates} candidates across ${totalPages} pages`);
+  logger.info('Starting parallel fetch from Teamtailor', { totalCandidates, totalPages });
 
   // Step 2: Generate URLs for remaining pages using page[number]
   const remainingUrls = Array.from({ length: totalPages - 1 }, (_, i) =>
@@ -60,7 +61,7 @@ export async function fetchAllCandidatesWithApplications(
         const page = await fetchPage<CandidateAttributes>(url);
         completedPages++;
         onProgress?.(completedPages * 30, totalCandidates); // Approximate progress
-        console.log(`[Teamtailor] Fetched page ${completedPages}/${totalPages}`);
+        logger.debug('Fetched page from Teamtailor', { completedPages, totalPages });
         return page;
       })
     ),
@@ -82,7 +83,7 @@ export async function fetchAllCandidatesWithApplications(
     }
   }
 
-  console.log(`[Teamtailor] Combined: ${candidates.length} candidates, ${allAppsById.size} applications`);
+  logger.info('Combined Teamtailor data', { candidates: candidates.length, applications: allAppsById.size });
 
   // Step 5: Build lookup: candidate_id → JobApplicationResource[]
   const applicationsByCandidateId = new Map<string, JobApplicationResource[]>();

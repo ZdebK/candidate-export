@@ -1,5 +1,6 @@
 import { config } from '../../../shared/config/env.config';
 import { withRetry, sleep } from '../../../shared/utils/retry.util';
+import { logger } from '../../../shared/utils/logger.util';
 import type { JsonApiResponse, JsonApiAttributes } from '../types/teamtailor.types';
 
 export class ApiError extends Error {
@@ -78,7 +79,7 @@ export async function fetchPage<T extends JsonApiAttributes>(
       maxRetries: config.export.maxRetries,
       baseDelayMs: 1_000,
       onRetry: (attempt, error) => {
-        console.warn(`[API] Retry attempt ${attempt}/${config.export.maxRetries}: ${error.message}`);
+        logger.warn(`API retry attempt ${attempt}/${config.export.maxRetries}`, { error: error.message });
       },
     },
   );

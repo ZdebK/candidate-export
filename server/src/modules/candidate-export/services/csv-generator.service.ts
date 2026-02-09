@@ -29,7 +29,7 @@ export function buildFileName(): string {
   return `candidates_${timestamp}.csv`;
 }
 
-export function generateCsv(rows: CandidateRow[], fileName: string): Promise<string> {
+export function generateCsv(rows: CandidateRow[], fileName: string): string {
   ensureExportsDir();
 
   const filePath = path.join(EXPORTS_DIR, fileName);
@@ -43,12 +43,12 @@ export function generateCsv(rows: CandidateRow[], fileName: string): Promise<str
       row.job_application_id,
       row.job_application_created_at,
     ]),
-    { header: true, columns: CSV_HEADERS as unknown as string[] },
+    { header: true, columns: [...CSV_HEADERS] },
   );
 
   fs.writeFileSync(filePath, output, 'utf-8');
 
-  return Promise.resolve(filePath);
+  return filePath;
 }
 
 export function deleteFile(filePath: string): void {

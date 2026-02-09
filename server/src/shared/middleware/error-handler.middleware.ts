@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger.util';
 
 export function errorHandler(
   error: Error,
@@ -6,7 +7,7 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
-  console.error('[Error]', error.message, error.stack);
+  logger.error('Internal server error', error);
 
   res.status(500).json({
     error: {

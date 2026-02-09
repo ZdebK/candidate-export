@@ -11,8 +11,6 @@ const INITIAL_JOB: Omit<ExportJob, 'jobId' | 'createdAt'> = {
     stage: 'Preparing export...',
     candidatesProcessed: 0,
     totalCandidates: 0,
-    applicationsProcessed: 0,
-    totalApplications: 0,
   },
 };
 

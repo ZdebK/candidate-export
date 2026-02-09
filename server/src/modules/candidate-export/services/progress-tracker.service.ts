@@ -1,4 +1,5 @@
 import { exportJobStore } from '../models/export-job.model';
+import { logger } from '../../../shared/utils/logger.util';
 import type { ExportProgress } from '../models/export-job.model';
 
 export class ProgressTracker {
@@ -14,7 +15,7 @@ export class ProgressTracker {
     });
 
     const { stage, percentage } = { ...job.progress, ...patch };
-    console.log(`[Job ${this.jobId}] ${stage} — ${percentage}%`);
+    logger.info(`Job ${this.jobId}: ${stage}`, { percentage });
   }
 
   candidatesPhase(processed: number, total: number): void {
@@ -25,6 +26,4 @@ export class ProgressTracker {
       percentage: total > 0 ? Math.round((processed / total) * 90) : 0,
     });
   }
-
-
 }

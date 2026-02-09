@@ -3,6 +3,7 @@ import express from 'express';
 import { exportRouter } from './modules/candidate-export/controllers/export.controller';
 import { errorHandler } from './shared/middleware/error-handler.middleware';
 import { config } from './shared/config/env.config';
+import { logger } from './shared/utils/logger.util';
 
 const app = express();
 
@@ -20,7 +21,7 @@ app.get('/health', (_req, res) => {
 app.use(errorHandler);
 
 app.listen(config.server.port, () => {
-  console.log(`[Server] Running on port ${config.server.port} (${config.server.nodeEnv})`);
+  logger.info(`Server running on port ${config.server.port}`, { env: config.server.nodeEnv });
 });
 
 export default app;
