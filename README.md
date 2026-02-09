@@ -2,14 +2,27 @@
 
 Full-stack application that connects to the [Teamtailor API](https://docs.teamtailor.com/), fetches all candidates with their job applications, and allows downloading the data as a CSV file.
 
+## Screenshots
+
+### Main Interface
+![Main Interface](SCREEN1.png)
+
+### Export Progress
+![Export Progress](SCREEN2.png)
+
+### Smart Cache - Download Previous Export
+![Download Previous Export](SCREEN3.png)
+
 ## Features
 
 - Export all candidates + job applications to CSV
+- **Smart caching** - reuse previous export if data hasn't changed (24h cache)
 - Background job with real-time progress tracking
 - Animated modal UI (progress bar, success/error states)
 - Rate limiting and retry with exponential backoff
 - **Parallel page fetching** with throttling (5 req/s max using `p-limit@3`)
 - Streaming CSV generation (memory-efficient for large datasets)
+- Professional logging system with structured JSON logs
 
 ## Tech Stack
 
@@ -20,6 +33,9 @@ Full-stack application that connects to the [Teamtailor API](https://docs.teamta
 | Animation | motion/react |
 | CSV | csv-stringify |
 | Throttling | p-limit@3 (for parallel API requests) |
+| Caching | localStorage (client-side, 24h TTL) |
+| Logging | Custom structured logger with timestamps |
+| Testing | Jest 29 + ts-jest + supertest |
 
 ## Project Structure
 
@@ -31,6 +47,7 @@ teamtailor/
 │       │   └── candidate-export/  # Export feature module
 │       │       ├── components/    # ExportButton, ExportModal, ExportProgress
 │       │       ├── hooks/         # useExportJob, useExportPolling
+│       │       ├── utils/         # export-cache.util (localStorage cache)
 │       │       └── types/         # export.types.ts
 │       └── shared/
 │           ├── components/ui/     # Button, Progress
@@ -49,7 +66,7 @@ teamtailor/
         └── shared/
             ├── config/            # env.config.ts (validation)
             ├── middleware/        # error-handler
-            └── utils/             # retry.util
+            └── utils/             # retry.util, logger.util
 ```
 
 ## API Endpoints
@@ -131,6 +148,8 @@ npm run test:coverage # Generate coverage report
 
 ## How It Works
 
+### New Export Flow
+
 1. User clicks **Export to CSV**
 2. Frontend sends `POST /api/candidate-export/start` → receives `jobId`
 3. Server fetches `GET /v1/candidates?include=job-applications` (paginated)
@@ -139,6 +158,30 @@ npm run test:coverage # Generate coverage report
    - **Performance**: ~40% faster than sequential fetching (e.g., 70s vs 120s for 10k candidates)
 4. Progress updates polled every 2.5s via `GET /api/candidate-export/status/:jobId`
 5. When complete, browser auto-downloads CSV via `GET /api/candidate-export/download/:jobId`
+6. Export metadata saved to localStorage cache (24h TTL)
+
+### Smart Caching (Idempotency Pattern)
+
+If the data hasn't changed since the last export, the app shows a **"Download Previous"** option instead of regenerating the same file:
+
+**How it works:**
+1. After successful export, the app caches: `jobId`, `candidatesCount`, `applicationsCount`, `fileName`, `timestamp`
+2. On next visit, the app fetches current counts from API
+3. If counts match cached values → shows green badge with download icon
+4. User can instantly download previous export OR generate fresh one
+5. Cache expires after 24 hours (matches server file retention)
+
+**Benefits:**
+- ⚡ Instant download for unchanged data (no API calls, no processing)
+- 💰 Reduces server load and API quota usage
+- 🎯 User choice: quick download or fresh export
+
+**Cache validation:**
+```typescript
+// Cache is valid only if BOTH counts match exactly
+cachedExport.candidatesCount === currentCandidates &&
+cachedExport.applicationsCount === currentApplications
+```
 
 ### Why p-limit@3?
 

@@ -1,15 +1,29 @@
 import { AnimatePresence } from 'motion/react';
-import { Users } from 'lucide-react';
+import { Users, Download, Sparkles } from 'lucide-react';
 import { ExportButton } from './modules/candidate-export/components/ExportButton';
 import { ExportModal } from './modules/candidate-export/components/ExportModal';
 import { useExportJob } from './modules/candidate-export/hooks/useExportJob';
 import { useExportCount } from './modules/candidate-export/hooks/useExportCount';
+import { getCachedExport, isCacheValid } from './modules/candidate-export/utils/export-cache.util';
 
 function App() {
-  const { job, startExport, resetJob } = useExportJob();
+  const { job, startExport, downloadPrevious, resetJob } = useExportJob();
   const { counts, loading: countLoading } = useExportCount();
 
+  const cachedExport = getCachedExport();
+  const canUseCached = counts && cachedExport && isCacheValid(cachedExport, counts.candidates, counts.applications);
+
   const isActive = job?.status === 'pending' || job?.status === 'processing';
+
+  const handleNewExport = () => {
+    startExport(counts ?? undefined);
+  };
+
+  const handleDownloadPrevious = () => {
+    if (cachedExport) {
+      downloadPrevious(cachedExport.jobId);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -45,11 +59,38 @@ function App() {
               <div className="text-sm text-slate-400">Loading candidate count...</div>
             )}
 
-            <ExportButton
-              onClick={startExport}
-              loading={isActive}
-              disabled={job !== null}
-            />
+            {canUseCached && !job && (
+              <div className="flex flex-col items-center gap-3">
+                <div className="inline-flex items-center gap-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Previous export available (same data)</span>
+                  </div>
+
+                  <button
+                    onClick={handleDownloadPrevious}
+                    title="Download previous export"
+                    className="inline-flex items-center justify-center w-8 h-8 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <ExportButton
+                  onClick={handleNewExport}
+                  loading={false}
+                  disabled={false}
+                />
+              </div>
+            )}
+
+            {!canUseCached && (
+              <ExportButton
+                onClick={handleNewExport}
+                loading={isActive}
+                disabled={job !== null}
+              />
+            )}
           </div>
         </div>
       </main>

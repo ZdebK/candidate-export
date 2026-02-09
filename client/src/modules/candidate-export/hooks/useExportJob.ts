@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useExportPolling } from './useExportPolling';
+import { setCachedExport } from '../utils/export-cache.util';
 import type { ExportJob, ExportStatusResponse, StartExportResponse } from '../types/export.types';
 
 const API_BASE = '/api/candidate-export';
@@ -16,12 +17,14 @@ const INITIAL_JOB: Omit<ExportJob, 'jobId' | 'createdAt'> = {
 
 interface UseExportJobReturn {
   job: ExportJob | null;
-  startExport: () => Promise<void>;
+  startExport: (counts?: { candidates: number; applications: number }) => Promise<void>;
+  downloadPrevious: (jobId: string) => void;
   resetJob: () => void;
 }
 
 export function useExportJob(): UseExportJobReturn {
   const [job, setJob] = useState<ExportJob | null>(null);
+  const savedCountsRef = useRef<{ candidates: number; applications: number } | null>(null);
 
   const updateFromStatus = useCallback((response: ExportStatusResponse) => {
     setJob((prev) => {
@@ -36,11 +39,23 @@ export function useExportJob(): UseExportJobReturn {
       };
     });
 
-    // Trigger download when complete
+    // Trigger download when complete and save to cache
     if (response.status === 'completed' && response.result) {
+      const result = response.result;
       setJob((prev) => {
         if (prev?.jobId) {
           triggerDownload(prev.jobId);
+
+          // Save to cache for future use
+          const counts = savedCountsRef.current;
+          if (counts && result) {
+            setCachedExport(
+              prev.jobId,
+              counts.candidates,
+              counts.applications,
+              result.fileName,
+            );
+          }
         }
         return prev;
       });
@@ -66,8 +81,13 @@ export function useExportJob(): UseExportJobReturn {
     onError: handleError,
   });
 
-  const startExport = useCallback(async () => {
+  const startExport = useCallback(async (counts?: { candidates: number; applications: number }) => {
     try {
+      // Save counts for cache later
+      if (counts) {
+        savedCountsRef.current = counts;
+      }
+
       const response = await fetch(`${API_BASE}/start`, { method: 'POST' });
 
       if (!response.ok) {
@@ -94,11 +114,15 @@ export function useExportJob(): UseExportJobReturn {
     }
   }, []);
 
+  const downloadPrevious = useCallback((jobId: string) => {
+    triggerDownload(jobId);
+  }, []);
+
   const resetJob = useCallback(() => {
     setJob(null);
   }, []);
 
-  return { job, startExport, resetJob };
+  return { job, startExport, downloadPrevious, resetJob };
 }
 
 function triggerDownload(jobId: string): void {
